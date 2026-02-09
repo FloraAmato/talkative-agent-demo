@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+models/piper/*.onnx
+models/piper/*.json
+.venv/

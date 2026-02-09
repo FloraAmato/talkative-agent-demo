@@ -1,0 +1,7 @@
+openai-whisper>=20231117
+openwakeword>=0.6.0
+pyaudio>=0.2.14
+numpy>=1.24
+opencv-python-headless>=4.8
+requests>=2.31
+piper-tts>=1.2.0

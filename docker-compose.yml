@@ -1,0 +1,44 @@
+services:
+  # ---------- Ollama (LLM server) ----------
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # ---------- Talkative Agent ----------
+  agent:
+    build: .
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=llava:7b
+      - WHISPER_MODEL=base
+      - PIPER_MODEL=it_IT-riccardo-x_low
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    devices:
+      # Webcam
+      - /dev/video0:/dev/video0
+    volumes:
+      # PulseAudio socket for audio I/O
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie
+      # Persist downloaded models between restarts
+      - piper_models:/app/models/piper
+    # Needed for ALSA/PulseAudio access
+    group_add:
+      - audio
+      - video
+
+volumes:
+  ollama_data:
+  piper_models:
