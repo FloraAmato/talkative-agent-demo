@@ -24,7 +24,7 @@ It listens for a wake word, transcribes speech, thinks via a multimodal LLM (wit
 | **LOADING** | Whisper, OpenWakeWord, Piper, Ollama | Pre-load all models once at startup |
 | **LISTENING** | OpenWakeWord + PyAudio | Detect wake word ("Hey Jarvis"), then record until silence |
 | **TRANSCRIBING** | Whisper (`base`) | Speech-to-text in Italian |
-| **THINKING** | Ollama (`llava:7b`) | Agentic LLM — can invoke a camera tool to see the environment |
+| **THINKING** | Ollama (`gemma3:4b`) | Agentic LLM — can invoke a camera tool to see the environment |
 | **SPEAKING** | Piper (`it_IT-riccardo-x_low`) | Text-to-speech in Italian, streamed to speakers |
 
 ### Camera Tool (Agentic Behavior)
@@ -37,8 +37,8 @@ The LLM is given a `capture_image` tool. When the user asks to *look at* or *des
 
 - Docker & Docker Compose
 - NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) (for Ollama)
-- USB webcam (e.g., Logitech) at `/dev/video0`
 - Working PulseAudio (microphone + speakers)
+- USB webcam (optional — e.g., Logitech at `/dev/video0`)
 
 ### Run
 
@@ -48,7 +48,7 @@ docker compose up --build
 
 On first run, the LOADING state will download:
 - The Whisper `base` model (~140 MB)
-- The `llava:7b` Ollama model (~4.5 GB)
+- The `gemma3:4b` Ollama model (~3 GB)
 - The Piper Italian voice (~15 MB)
 
 Subsequent runs are instant thanks to Docker volumes.
@@ -68,7 +68,7 @@ All settings are in `src/config.py` and overridable via environment variables:
 | Variable | Default | Description |
 |---|---|---|
 | `OLLAMA_HOST` | `http://ollama:11434` | Ollama API endpoint |
-| `OLLAMA_MODEL` | `llava:7b` | Multimodal model for reasoning |
+| `OLLAMA_MODEL` | `gemma3:4b` | Multimodal model for reasoning |
 | `WHISPER_MODEL` | `base` | Whisper model size (`tiny`, `base`, `small`, …) |
 | `WAKE_MODEL` | `hey_jarvis` | OpenWakeWord wake word model |
 | `WAKE_THRESHOLD` | `0.5` | Wake word confidence threshold |
@@ -93,9 +93,25 @@ All settings are in `src/config.py` and overridable via environment variables:
 │       ├── thinking.py       # THINKING — Ollama agentic LLM
 │       └── speaking.py       # SPEAKING — Piper TTS
 ├── Dockerfile
+├── Dockerfile.jetson          # ARM64 build for Jetson
 ├── docker-compose.yml
+├── docker-compose.jetson.yml  # Jetson Orin Nano deployment
 └── requirements.txt
 ```
+
+## Jetson Orin Nano Deployment
+
+A separate compose file targets the NVIDIA Jetson Orin Nano (JetPack 6 / L4T r36.4.0) using [dustynv/jetson-containers](https://github.com/dusty-nv/jetson-containers):
+
+```bash
+docker compose -f docker-compose.jetson.yml up --build
+```
+
+Key differences from the desktop compose:
+- **Ollama** uses `dustynv/ollama:r36.4.0` (pre-built for Jetson ARM64 + CUDA)
+- **Agent** builds from `Dockerfile.jetson` based on `dustynv/l4t-pytorch:r36.4.0` so Whisper can run on the Jetson GPU
+- Uses `runtime: nvidia` instead of the `deploy.resources` GPU reservation
+- `gemma3:4b` fits comfortably in the Orin Nano's 8 GB unified memory
 
 ## Colored Logging
 

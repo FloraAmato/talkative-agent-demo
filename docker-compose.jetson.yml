@@ -1,0 +1,55 @@
+# ──────────────────────────────────────────────────────────────
+# docker-compose.jetson.yml
+#
+# Deployment target: NVIDIA Jetson Orin Nano (JetPack 6 / L4T)
+#
+# Uses dustynv jetson-containers for Ollama and an ARM64 build
+# of the agent.  The Jetson's unified memory means both the LLM
+# and the agent share the same RAM — gemma3:4b fits comfortably
+# in the Orin Nano's 8 GB.
+#
+# Usage:
+#   docker compose -f docker-compose.jetson.yml up --build
+# ──────────────────────────────────────────────────────────────
+services:
+  # ---------- Ollama (Jetson-optimised) ----------
+  ollama:
+    image: dustynv/ollama:r36.4.0
+    runtime: nvidia
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+
+  # ---------- Talkative Agent ----------
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.jetson
+    runtime: nvidia
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=gemma3:4b
+      - WHISPER_MODEL=base
+      - PIPER_MODEL=it_IT-riccardo-x_low
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    # Uncomment to pass through a USB webcam:
+    # devices:
+    #   - /dev/video0:/dev/video0
+    volumes:
+      # PulseAudio socket for audio I/O
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie
+      # Persist downloaded models between restarts
+      - piper_models:/app/models/piper
+    group_add:
+      - audio
+      - video
+
+volumes:
+  ollama_data:
+  piper_models:

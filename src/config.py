@@ -8,7 +8,7 @@ import os
 # Ollama
 # ---------------------------------------------------------------------------
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llava:7b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma3:4b")
 
 # System prompt — instruct the model to respond in Italian
 SYSTEM_PROMPT = os.getenv(

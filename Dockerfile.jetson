@@ -1,0 +1,35 @@
+# ──────────────────────────────────────────────────────────────
+# Dockerfile.jetson
+#
+# ARM64 / JetPack-compatible build for the Talkative Agent.
+# Based on dustynv/l4t-pytorch so CUDA/cuDNN are available
+# for Whisper inference on the Jetson GPU.
+# ──────────────────────────────────────────────────────────────
+FROM dustynv/l4t-pytorch:r36.4.0
+
+# System deps for PyAudio, OpenCV, Piper
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        portaudio19-dev \
+        libsndfile1 \
+        ffmpeg \
+        libgl1 \
+        libglib2.0-0 \
+        alsa-utils \
+        pulseaudio-utils \
+        python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir piper-tts && \
+    pip3 install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN mkdir -p /app/models/piper
+
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python3", "main.py"]
