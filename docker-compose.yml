@@ -25,9 +25,9 @@ services:
       - WHISPER_MODEL=base
       - PIPER_MODEL=it_IT-riccardo-x_low
       - PULSE_SERVER=unix:/run/user/1000/pulse/native
-    devices:
-      # Webcam
-      - /dev/video0:/dev/video0
+    # Uncomment to pass through a USB webcam (requires the device on the host):
+    # devices:
+    #   - /dev/video0:/dev/video0
     volumes:
       # PulseAudio socket for audio I/O
       - /run/user/1000/pulse:/run/user/1000/pulse

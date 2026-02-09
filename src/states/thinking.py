@@ -98,17 +98,27 @@ class ThinkingHandler:
 
                 if fn_name == "capture_image":
                     image_b64 = capture_frame_b64()
-                    # Append image as a new user message with the image
-                    messages.append({
-                        "role": "tool",
-                        "content": "Immagine catturata con successo.",
-                    })
-                    # Re-send with image embedded in a user message
-                    messages.append({
-                        "role": "user",
-                        "content": "Ecco l'immagine catturata dalla webcam.",
-                        "images": [image_b64],
-                    })
+                    if image_b64 is None:
+                        # Camera unavailable — tell the model
+                        messages.append({
+                            "role": "tool",
+                            "content": (
+                                "Errore: la webcam non è disponibile. "
+                                "Rispondi all'utente dicendo che non puoi "
+                                "vedere in questo momento."
+                            ),
+                        })
+                    else:
+                        messages.append({
+                            "role": "tool",
+                            "content": "Immagine catturata con successo.",
+                        })
+                        # Re-send with image embedded in a user message
+                        messages.append({
+                            "role": "user",
+                            "content": "Ecco l'immagine catturata dalla webcam.",
+                            "images": [image_b64],
+                        })
                 else:
                     messages.append({
                         "role": "tool",
